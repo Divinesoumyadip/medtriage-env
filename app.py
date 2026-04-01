@@ -32,6 +32,12 @@ env_state = {"task_id":None,"current_patient":None,"multi_patients":[],"doctors"
 class ResetRequest(BaseModel):
     task_id: str = "task1"
 
+    @classmethod
+    def model_validate(cls, obj):
+        if obj is None: obj = {}
+        return super().model_validate(obj)
+    model_config = {"extra": "allow"}
+
 class StepAction(BaseModel):
     action: dict
 
@@ -69,7 +75,8 @@ def tasks(): return {"tasks":[{"id":"task1","name":"Vital Signs Triage","difficu
 def state(): return {"task_id":env_state["task_id"],"step_count":env_state["step_count"],"done":env_state["done"],"score":env_state["score"]}
 
 @app.post("/reset")
-def reset(req: ResetRequest):
+def reset(req: ResetRequest = None):
+    if req is None: req = ResetRequest()
     global env_state
     env_state.update({"task_id":req.task_id,"step_count":0,"done":False,"score":0.0,"deterioration_timer":0})
     doctors = [d.copy() for d in DOCTORS]
