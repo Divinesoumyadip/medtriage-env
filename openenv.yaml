@@ -1,0 +1,23 @@
+name: MedTriage-Env
+version: "1.0.0"
+description: Hospital emergency room AI triage environment
+tasks:
+  - id: task1
+    name: Vital Signs Triage
+    difficulty: easy
+    score_range: [0.0, 1.0]
+  - id: task2
+    name: Doctor Assignment
+    difficulty: medium
+    score_range: [0.0, 1.0]
+  - id: task3
+    name: Mass Casualty Coordination
+    difficulty: hard
+    score_range: [0.0, 1.0]
+api:
+  reset: POST /reset
+  step: POST /step
+  state: GET /state
+runtime:
+  framework: fastapi
+  port: 7860
