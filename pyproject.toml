@@ -1,0 +1,9 @@
+[project]
+name = "medtriage-env"
+version = "1.0.0"
+description = "Hospital Emergency Room AI Triage Environment"
+requires-python = ">=3.10"
+
+[tool.openenv]
+name = "MedTriage-Env"
+version = "1.0.0"
