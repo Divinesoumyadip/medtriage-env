@@ -82,15 +82,15 @@ def reset(req: ResetRequest = None):
     doctors = [d.copy() for d in DOCTORS]
     env_state["doctors"] = doctors
     if req.task_id == "task1":
-        p = random.choice(PATIENTS)
+        p = PATIENTS[0]  # Fixed for reproducibility
         env_state["current_patient"] = p
         return {"observation":{"patient_id":p["id"],"vitals":{"bp":p["bp"],"hr":p["hr"],"spo2":p["spo2"]},"conscious":p["conscious"],"complaint":p["complaint"],"instructions":"Action: {triage_level: 'immediate|urgent|delayed|minor', confidence: 0.0-1.0}"},"reward":0.0,"done":False,"info":{"task":"task1"}}
     elif req.task_id == "task2":
-        p = random.choice(PATIENTS)
+        p = PATIENTS[0]  # Fixed for reproducibility
         env_state["current_patient"] = p
         return {"observation":{"patient_id":p["id"],"complaint":p["complaint"],"vitals":{"bp":p["bp"],"hr":p["hr"],"spo2":p["spo2"]},"available_doctors":[d for d in doctors if d["available"]],"instructions":"Action: {assign_doctor_id: 'D1|D2|D3|D4|D5'}"},"reward":0.0,"done":False,"info":{"task":"task2"}}
     else:
-        patients = random.sample(PATIENTS, 5)
+        patients = PATIENTS[:5]  # Fixed for reproducibility
         env_state["multi_patients"] = patients
         return {"observation":{"patients":[{"id":p["id"],"complaint":p["complaint"],"hr":p["hr"],"spo2":p["spo2"],"conscious":p["conscious"]} for p in patients],"available_doctors":[d for d in doctors if d["available"]][:3],"icu_beds":2,"instructions":"Action: {assignments:[{patient_id,doctor_id,triage_level}]} max 3"},"reward":0.0,"done":False,"info":{"task":"task3"}}
 
