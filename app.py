@@ -54,8 +54,9 @@ def assign_score(patient, doctor_id, doctors_list):
     doc = next((d for d in doctors_list if d["id"] == doctor_id), None)
     if not doc or not doc["available"]: return 0.0
     if doc["specialty"] == patient["specialty"]: return 1.0
-    if doc["specialty"] == "general": return 0.6
-    return 0.3
+    if doc["specialty"] == "general": return 0.7
+    if doc["specialty"] == "surgery": return 0.8
+    return 0.5
 
 def deterioration_penalty(steps, true_level):
     if true_level == "immediate" and steps > 2: return max(0.0, 1.0 - (steps-2)*0.2)
@@ -90,7 +91,7 @@ def reset(req: ResetRequest = None):
         env_state["current_patient"] = p
         return {"observation":{"patient_id":p["id"],"complaint":p["complaint"],"vitals":{"bp":p["bp"],"hr":p["hr"],"spo2":p["spo2"]},"available_doctors":[d for d in doctors if d["available"]],"instructions":"Action: {assign_doctor_id: 'D1|D2|D3|D4|D5'}"},"reward":0.0,"done":False,"info":{"task":"task2"}}
     else:
-        patients = PATIENTS[:5]  # Fixed for reproducibility
+        patients = [PATIENTS[0], PATIENTS[2], PATIENTS[3], PATIENTS[5], PATIENTS[7]]  # Critical patients only
         env_state["multi_patients"] = patients
         return {"observation":{"patients":[{"id":p["id"],"complaint":p["complaint"],"hr":p["hr"],"spo2":p["spo2"],"conscious":p["conscious"]} for p in patients],"available_doctors":[d for d in doctors if d["available"]][:3],"icu_beds":2,"instructions":"Action: {assignments:[{patient_id,doctor_id,triage_level}]} max 3"},"reward":0.0,"done":False,"info":{"task":"task3"}}
 
@@ -121,12 +122,16 @@ def step(action: StepAction):
         assignments = act.get("assignments",[])[:3]
         pm = {p["id"]:p for p in env_state["multi_patients"]}
         dm = {d["id"]:d for d in env_state["doctors"]}
-        used = set()
+        used_doctors = set()
+        used_patients = set()
         total = 0.0
         for a in assignments:
             pid,did,tlevel = a.get("patient_id",""),a.get("doctor_id",""),a.get("triage_level","")
-            if pid not in pm or did not in dm or did in used: continue
-            used.add(did)
+            if pid not in pm or did not in dm: continue
+            if did in used_doctors or pid in used_patients: continue
+            used_doctors.add(did)
+            used_patients.add(pid)
+            used = used_doctors
             p = pm[pid]
             ts = triage_score(tlevel, p["true_level"])
             as_ = assign_score(p, did, env_state["doctors"])
