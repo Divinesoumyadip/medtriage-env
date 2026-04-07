@@ -1,17 +1,26 @@
 import os, json, time, requests
-from openai import OpenAI
 
 API_BASE_URL = os.environ.get("API_BASE_URL", "https://router.huggingface.co/v1")
 MODEL_NAME   = os.environ.get("MODEL_NAME", "meta-llama/Llama-3.3-70B-Instruct")
-HF_TOKEN     = os.getenv("HF_TOKEN")
+HF_TOKEN     = os.environ.get("HF_TOKEN", "")
 ENV_URL      = os.environ.get("ENV_URL", "https://soumyaAAAAAAAAAAA-medtriage-env.hf.space")
 
-if HF_TOKEN is None:
-    raise ValueError("HF_TOKEN environment variable is required")
-
-client = OpenAI(base_url=API_BASE_URL, api_key=HF_TOKEN)
-
 TASKS = ["task1", "task2", "task3"]
+
+def llm_call(prompt):
+    url = f"{API_BASE_URL}/chat/completions"
+    headers = {
+        "Authorization": f"Bearer {HF_TOKEN}",
+        "Content-Type": "application/json"
+    }
+    payload = {
+        "model": MODEL_NAME,
+        "max_tokens": 500,
+        "messages": [{"role": "user", "content": prompt}]
+    }
+    resp = requests.post(url, headers=headers, json=payload, timeout=60)
+    resp.raise_for_status()
+    return resp.json()["choices"][0]["message"]["content"].strip()
 
 def get_action(task_id, observation):
     obs_str = json.dumps(observation, indent=2)
@@ -32,13 +41,13 @@ Respond ONLY with JSON: {{"triage_level": "immediate", "confidence": 0.95}}"""
         prompt = f"""You are an ER coordinator. Match patient to best doctor by specialty.
 
 Specialty matching rules:
-- chest pain/heart → cardiology
-- breathing/lungs → pulmonology or general
-- stroke/brain → neurology  
-- surgery/bleeding/abdominal → surgery
-- children → pediatrics
-- bones/fracture → orthopedics
-- general/fever/headache → general
+- chest pain/heart -> cardiology
+- breathing/lungs -> pulmonology or general
+- stroke/brain -> neurology
+- surgery/bleeding/abdominal -> surgery
+- children -> pediatrics
+- bones/fracture -> orthopedics
+- general/fever/headache -> general
 
 {obs_str}
 
@@ -62,11 +71,7 @@ Pick the doctor whose specialty best matches the complaint."""
             {"patient_id": p3, "doctor_id": d3, "triage_level": "urgent"}
         ]}
 
-    response = client.chat.completions.create(
-        model=MODEL_NAME, max_tokens=500,
-        messages=[{"role": "user", "content": prompt}]
-    )
-    text = response.choices[0].message.content.strip()
+    text = llm_call(prompt)
     if "```" in text:
         text = text.split("```")[1]
         if text.startswith("json"): text = text[4:]
