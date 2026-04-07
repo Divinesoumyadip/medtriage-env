@@ -1,4 +1,7 @@
-import os, json, time, requests
+import os, json, time, requests, subprocess, sys
+
+subprocess.check_call([sys.executable, "-m", "pip", "install", "openai==1.54.0", "httpx==0.27.2", "-q"])
+
 from openai import OpenAI
 
 API_BASE_URL = os.environ.get("API_BASE_URL", "https://router.huggingface.co/v1")
