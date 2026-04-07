@@ -6,7 +6,10 @@ MODEL_NAME   = os.environ.get("MODEL_NAME", "meta-llama/Llama-3.3-70B-Instruct")
 HF_TOKEN     = os.environ.get("HF_TOKEN", "")
 ENV_URL      = os.environ.get("ENV_URL", "https://soumyaAAAAAAAAAAA-medtriage-env.hf.space")
 
-client = OpenAI(base_url=API_BASE_URL, api_key=HF_TOKEN)
+def get_client():
+    token = HF_TOKEN if HF_TOKEN else "dummy-token"
+    return OpenAI(base_url=API_BASE_URL, api_key=token)
+
 TASKS = ["task1", "task2", "task3"]
 
 def get_action(task_id, observation):
@@ -58,6 +61,7 @@ Pick the doctor whose specialty best matches the complaint."""
             {"patient_id": p3, "doctor_id": d3, "triage_level": "urgent"}
         ]}
 
+    client = get_client()
     response = client.chat.completions.create(
         model=MODEL_NAME, max_tokens=500,
         messages=[{"role": "user", "content": prompt}]
@@ -69,7 +73,7 @@ Pick the doctor whose specialty best matches the complaint."""
     return json.loads(text.strip())
 
 def run_task(task_id):
-    reset_data = requests.post(f"{ENV_URL}/reset", json={"task_id": task_id}).json()
+    reset_data = requests.post(f"{ENV_URL}/reset", json={"task_id": task_id}, timeout=30).json()
     observation = reset_data.get("observation", {})
     print(f"[START] task={task_id} env=MedTriage-Env model={MODEL_NAME}", flush=True)
     step_num, reward, done, rewards = 0, 0.0, False, []
@@ -77,12 +81,12 @@ def run_task(task_id):
         step_num += 1
         try:
             action = get_action(task_id, observation)
-            step_data = requests.post(f"{ENV_URL}/step", json={"action": action}).json()
+            step_data = requests.post(f"{ENV_URL}/step", json={"action": action}, timeout=30).json()
             observation = step_data.get("observation", {})
             reward = step_data.get("reward", 0.0)
             done = step_data.get("done", True)
             rewards.append(reward)
-            action_str = json.dumps(action).replace(" ","")
+            action_str = json.dumps(action).replace(" ", "")
             print(f"[STEP]  step={step_num} action={action_str} reward={reward:.2f} done={str(done).lower()} error=null", flush=True)
         except Exception as e:
             rewards.append(0.0)
@@ -100,11 +104,10 @@ def main():
         try:
             scores[task_id] = run_task(task_id)
         except Exception as e:
-            print(f"[END]   success=false steps=0 rewards=0.00", flush=True)
+            print(f"[END]   success=false steps=0 rewards=0.00 error={str(e)}", flush=True)
             scores[task_id] = 0.0
     print(f"\nFinal scores: {scores}", flush=True)
-    print(f"Average: {round(sum(scores.values())/len(scores),4)}", flush=True)
+    print(f"Average: {round(sum(scores.values())/len(scores), 4)}", flush=True)
 
 if __name__ == "__main__":
     main()
-# This line intentionally left blank
