@@ -1,18 +1,12 @@
-import os, json, time, requests, subprocess, sys
-
-subprocess.check_call([sys.executable, "-m", "pip", "install", "openai==1.54.0", "httpx==0.27.2", "-q"])
-
+﻿import os, json, time, requests
 from openai import OpenAI
 
-API_BASE_URL = os.environ.get("API_BASE_URL", "https://router.huggingface.co/v1")
+API_BASE_URL = os.environ["API_BASE_URL"]
 MODEL_NAME   = os.environ.get("MODEL_NAME", "meta-llama/Llama-3.3-70B-Instruct")
-HF_TOKEN     = os.getenv("HF_TOKEN")
+API_KEY      = os.environ["API_KEY"]
 ENV_URL      = os.environ.get("ENV_URL", "https://soumyaAAAAAAAAAAA-medtriage-env.hf.space")
 
-if HF_TOKEN is None:
-    raise ValueError("HF_TOKEN environment variable is required")
-
-client = OpenAI(base_url=API_BASE_URL, api_key=HF_TOKEN)
+client = OpenAI(base_url=API_BASE_URL, api_key=API_KEY)
 
 TASKS = ["task1", "task2", "task3"]
 
@@ -96,9 +90,8 @@ def run_task(task_id):
             print(f"[STEP]  step={step_num} action=null reward=0.00 done=true error={str(e)}", flush=True)
             done = True
         if done: break
-    rewards_str = ",".join([f"{r:.2f}" for r in rewards])
-    success = reward > 0.0
-    print(f"[END]   success={str(success).lower()} steps={step_num} rewards={rewards_str}", flush=True)
+    score = max(0.01, min(0.99, float(reward)))
+    print(f"[END] task={task_id} score={score:.2f} steps={step_num}", flush=True)
     return reward
 
 def main():
@@ -107,7 +100,7 @@ def main():
         try:
             scores[task_id] = run_task(task_id)
         except Exception as e:
-            print(f"[END]   success=false steps=0 rewards=0.00 error={str(e)}", flush=True)
+            print(f"[END] task={task_id} score=0.01 steps=0", flush=True)
             scores[task_id] = 0.0
     print(f"\nFinal scores: {scores}", flush=True)
     print(f"Average: {round(sum(scores.values())/len(scores), 4)}", flush=True)
