@@ -3,12 +3,13 @@ from openai import OpenAI
 
 API_BASE_URL = os.environ.get("API_BASE_URL", "https://router.huggingface.co/v1")
 MODEL_NAME   = os.environ.get("MODEL_NAME", "meta-llama/Llama-3.3-70B-Instruct")
-HF_TOKEN     = os.environ.get("HF_TOKEN", "")
+HF_TOKEN     = os.getenv("HF_TOKEN")
 ENV_URL      = os.environ.get("ENV_URL", "https://soumyaAAAAAAAAAAA-medtriage-env.hf.space")
 
-def get_client():
-    token = HF_TOKEN if HF_TOKEN else "dummy-token"
-    return OpenAI(base_url=API_BASE_URL, api_key=token)
+if HF_TOKEN is None:
+    raise ValueError("HF_TOKEN environment variable is required")
+
+client = OpenAI(base_url=API_BASE_URL, api_key=HF_TOKEN)
 
 TASKS = ["task1", "task2", "task3"]
 
@@ -61,7 +62,6 @@ Pick the doctor whose specialty best matches the complaint."""
             {"patient_id": p3, "doctor_id": d3, "triage_level": "urgent"}
         ]}
 
-    client = get_client()
     response = client.chat.completions.create(
         model=MODEL_NAME, max_tokens=500,
         messages=[{"role": "user", "content": prompt}]
