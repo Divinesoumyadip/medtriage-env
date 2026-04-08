@@ -17,6 +17,10 @@ PATIENTS = [
     {"id":"P6","name":"Male 55","bp":"85/50","hr":150,"spo2":85,"conscious":False,"complaint":"internal bleeding","true_level":"immediate","specialty":"surgery"},
     {"id":"P7","name":"Female 40","bp":"130/85","hr":78,"spo2":98,"conscious":True,"complaint":"headache","true_level":"minor","specialty":"general"},
     {"id":"P8","name":"Male 70","bp":"95/65","hr":120,"spo2":90,"conscious":True,"complaint":"severe abdominal pain","true_level":"urgent","specialty":"surgery"},
+    {"id":"P9","name":"Female 60","bp":"75/45","hr":155,"spo2":82,"conscious":False,"complaint":"cardiac arrest","true_level":"immediate","specialty":"cardiology"},
+    {"id":"P10","name":"Male 35","bp":"115/75","hr":102,"spo2":95,"conscious":True,"complaint":"knee fracture","true_level":"delayed","specialty":"orthopedics"},
+    {"id":"P11","name":"Child 5","bp":"85/55","hr":140,"spo2":89,"conscious":False,"complaint":"severe allergic reaction","true_level":"immediate","specialty":"pediatrics"},
+    {"id":"P12","name":"Female 50","bp":"105/70","hr":115,"spo2":92,"conscious":True,"complaint":"diabetic emergency","true_level":"urgent","specialty":"general"},
 ]
 
 DOCTORS = [
