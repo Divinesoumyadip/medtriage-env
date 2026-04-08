@@ -1,4 +1,4 @@
-﻿import os, json, time, requests
+import os, json, time, requests
 from openai import OpenAI
 
 API_BASE_URL = os.environ.get("API_BASE_URL", "https://router.huggingface.co/v1")
