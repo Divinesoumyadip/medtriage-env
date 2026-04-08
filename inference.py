@@ -45,13 +45,57 @@ Respond ONLY with JSON: {{"assign_doctor_id": "D1"}}
 Pick the doctor whose specialty best matches the complaint."""
 
     else:
-        available_docs = [d["id"] for d in observation.get("available_doctors", [])]
+        available_docs = observation.get("available_doctors", [])
         patients_list = observation.get("patients", [])
+        
+        SPECIALTY_MAP = {
+            "chest pain": "cardiology", "heart": "cardiology",
+            "breathing": "pulmonology", "difficulty breathing": "pulmonology",
+            "stroke": "neurology", "stroke symptoms": "neurology",
+            "bleeding": "surgery", "internal bleeding": "surgery",
+            "abdominal": "surgery", "severe abdominal pain": "surgery",
+            "broken": "orthopedics", "fracture": "orthopedics",
+            "child": "pediatrics",
+            "fever": "general", "headache": "general"
+        }
+        
+        TRIAGE_MAP = {
+            "chest pain": "immediate", "internal bleeding": "immediate",
+            "stroke symptoms": "immediate", "difficulty breathing": "urgent",
+            "severe abdominal pain": "urgent", "broken arm": "delayed",
+            "mild fever": "minor", "headache": "minor"
+        }
+        
         critical = sorted(patients_list, key=lambda x: (x.get("conscious", True), x.get("spo2", 100)))
+        
+        used_docs = set()
         assignments = []
-        for i in range(min(3, len(critical), len(available_docs))):
-            triage = "immediate" if i < 2 else "urgent"
-            assignments.append({"patient_id": critical[i]["id"], "doctor_id": available_docs[i], "triage_level": triage})
+        
+        for p in critical[:3]:
+            complaint = p.get("complaint", "")
+            needed_specialty = SPECIALTY_MAP.get(complaint, "general")
+            triage = TRIAGE_MAP.get(complaint, "urgent" if not p.get("conscious", True) else "delayed")
+            
+            best_doc = None
+            for d in available_docs:
+                if d["id"] not in used_docs and d["specialty"] == needed_specialty:
+                    best_doc = d["id"]
+                    break
+            if not best_doc:
+                for d in available_docs:
+                    if d["id"] not in used_docs and d["specialty"] == "general":
+                        best_doc = d["id"]
+                        break
+            if not best_doc:
+                for d in available_docs:
+                    if d["id"] not in used_docs:
+                        best_doc = d["id"]
+                        break
+            
+            if best_doc:
+                used_docs.add(best_doc)
+                assignments.append({"patient_id": p["id"], "doctor_id": best_doc, "triage_level": triage})
+        
         if not assignments:
             assignments = [{"patient_id": "P1", "doctor_id": "D1", "triage_level": "immediate"}]
         return {"assignments": assignments}
