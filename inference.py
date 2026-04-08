@@ -1,9 +1,9 @@
 ﻿import os, json, time, requests
 from openai import OpenAI
 
-API_BASE_URL = os.environ["API_BASE_URL"]
+API_BASE_URL = os.environ.get("API_BASE_URL", "https://router.huggingface.co/v1")
 MODEL_NAME   = os.environ.get("MODEL_NAME", "meta-llama/Llama-3.3-70B-Instruct")
-API_KEY      = os.environ["API_KEY"]
+API_KEY      = os.environ.get("API_KEY", os.environ.get("HF_TOKEN", "dummy-key"))
 ENV_URL      = os.environ.get("ENV_URL", "https://soumyaAAAAAAAAAAA-medtriage-env.hf.space")
 
 client = OpenAI(base_url=API_BASE_URL, api_key=API_KEY)
